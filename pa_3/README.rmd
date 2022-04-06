@@ -1,0 +1,81 @@
+---
+title: "README"
+author: "Monica Impaglia"
+date: '2022-04-04'
+output: github_document
+---
+
+```{r}
+library("ggplot2")  
+library("readr")  
+library("here")  
+library("tidyverse") 
+library("dplyr")
+```
+# **Answers to question 7:**
+## a) By subtracting the starting point of the interval from the end point of the interval, we will have the duration.     For each percentage we have to multiply the percent by the duration.  
+
+##  b)The script starts by locating where the sound and text grid files are located.  It then identifies each interval and extracts the item, value and language.  It then gets the formants at each specified interval, calculates spectral centroids and trajectory lengths.  Lastly the script shows the data values in a praat window and saves the same data to a csv file as an excel spreadsheet.  
+
+##  c) In the last programming assignment, we had to use two different scripts, one to seperate the stimuli and one to extrapolate the data from the textgrids that had to be done individually.  In this assignment we had one script that did all of it and allowed us to seperate all the intervals in one textgrid.  This script seems to be more efficient and also gives us more information than the last one. 
+
+```{r}
+args(read.csv)  
+read.csv(file = "C:\\Users\\Home\\OneDrive\\Desktop\\pa_3\\data\\vowel_data.csv") 
+vowel_data <- read.csv("C:\\Users\\Home\\OneDrive\\Desktop\\pa_3\\data\\vowel_data.csv")  
+```
+
+```{r}
+mean(vowel_data[vowel_data$language == 'en', 'f1_cent'])
+```
+```{r}
+mean(vowel_data[vowel_data$language == 'sp', 'f1_cent'])
+
+```
+```{r}
+mean(vowel_data[vowel_data$language == 'en', 'f2_cent'])
+```
+```{r}
+mean(vowel_data[vowel_data$language == 'sp', 'f2_cent'])
+```
+
+```{r}
+ggplot(data = vowel_data, aes(x = vowel, y = tl, color = language)) + 
+  geom_point()  
+  
+
+```
+```{r}
+ggplot(data = vowel_data, aes(x = vowel, y = f1_cent, color = language)) +  
+  geom_point()
+```
+```{r}
+ggplot(data = vowel_data, aes(x = vowel, y = f2_cent, color = language)) +  
+  geom_point()
+```
+```{r}
+vowel_means <- vowel_data %>% 
+  group_by(vowel, language) %>% 
+  summarize(f1_cent = mean(f1_cent), f2_cent = mean(f2_cent)) %>% 
+  ungroup() %>% 
+  mutate(order = case_when(vowel == "i" ~ 1, vowel == "a" ~ 2, TRUE ~ 3), 
+         vowel = forcats::fct_reorder2(vowel, vowel, order)) %>% 
+  arrange(order)
+
+vowel_data %>% 
+  mutate(vowel = forcats::fct_relevel(vowel, "u", "a", "i")) %>% 
+  ggplot(., aes(x = f2_cent, y = f1_cent, color = language, label = vowel)) + 
+    geom_text(size = 3.5, alpha = 0.6, show.legend = F) + 
+    geom_path(data = vowel_means, aes(group = language, lty = language), 
+              color = "grey") + 
+    geom_text(data = vowel_means, show.legend = F, size = 7) + 
+    scale_y_reverse() + 
+    scale_x_reverse() + 
+    scale_color_brewer(palette = "Set1") + 
+    labs(title = "Vowel space comparison", 
+         subtitle = "Spectral centroids of English/Spanish cardinal vowels", 
+         y = "F1 (hz)", x = "F2 (hz)") + 
+    theme_minimal(base_size = 16)
+
+```
+
